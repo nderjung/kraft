@@ -122,6 +122,7 @@ ifeq ($(subst help,,$(MAKECMDGOALS)),)
 	@echo "Docker container build targets:                                               "
 	@echo "  docker-gcc               Build gcc and binutils in Docker container.        "
 	@echo "  docker-qemu              Build qemu in a Docker container.                  "
+	@echo "  docker-gotools           Build contributed Go-based tools in a container.   "
 	@echo "  docker-kraft             Build the kraft Docker container.                  "
 	@echo "  docker-linuxk            Build the Linux kernel in a container.             "
 	@echo "  docker-pkg-deb           Build a Debian-based packaging environment.        "
