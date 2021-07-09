@@ -1,8 +1,11 @@
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Gaulthier Gain <gaulthier.gain@uliege.be>
+#          Alexander Jung <alexander.jung@neclab.eu>
 #
 # Copyright (c) 2020, Université de Liège., ULiege. All rights reserved.
+#               2020, NEC Laboratories Europe GmbH, NEC Corporation.
+#                     All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -29,20 +32,41 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-ARG GOLANG_VERSION=1.14.4
+ifeq ($(KRAFTDIR),)
+CONTRIBDIR    ?= $(CURDIR)/../
+else
+CONTRIBDIR    ?= $(KRAFTDIR)/contrib
+endif
 
-FROM golang:${GOLANG_VERSION} AS gotools-build
+DEVELDEPENDER ?= $(CONTRIBDIR)/depender
+OUTDIR        ?= $(DEVELDEPENDER)/out
 
-LABEL MAINTAINER="Gaulthier Gain <gaulthier.gain@uliege.be>"
+# Program arguments
+DEPENDER      := kraft-devel-depender
+ARCH          ?= amd64
 
-ARG CONTRIBDIR=/usr/src/github.com/unikraft/kraft/contrib
-ENV GOPATH=/usr
+# Tools
+DOCKER        ?= docker
+GO            ?= go
+GOBUILD       ?= $(GO) build
+GOCLEAN       ?= $(GO) clean
+GOGET         ?= $(GO) get
+CD            ?= cd
+CHMOD         ?= chmod
 
-COPY ./contrib/ ${CONTRIBDIR}
-WORKDIR ${CONTRIBDIR}
+# Targets
+$(DEPENDER): depender-deps
+	($(CD) $(DEVELDEPENDER) && \
+		CGO_ENABLED=0 GOOS=linux GOARCH=$(ARCH) $(GOBUILD) -v \
+			-o $(OUTDIR)/$(DEPENDER))
+	$(CHMOD) +x $(OUTDIR)/$(DEPENDER)
 
-RUN make OUTDIR=/usr/bin
+depender-clean:
+	$(GOCLEAN)
+	rm -vf $(OUTDIR)/$(DEPENDER)
 
-FROM scratch AS gotools
-
-COPY --from=gotools-build /usr/bin/ /usr/bin/
+depender-deps:
+	$(GOGET) github.com/fatih/color
+	$(GOGET) github.com/akamensky/argparse
+	$(GOGET) github.com/awalterschulze/gographviz
+	$(GOGET) github.com/sergi/go-diff/...

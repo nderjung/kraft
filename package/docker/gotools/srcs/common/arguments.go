@@ -70,13 +70,14 @@ type Arguments struct {
 // arguments.
 //
 // It returns a parser as well as an error if any, otherwise it returns nil.
-func (args *Arguments) InitArguments(prog string, desc string) (*argparse.Parser, error) {
+func (args *Arguments) InitArguments() (*argparse.Parser, error) {
 
 	args.IntArg = make(map[string]*int)
 	args.BoolArg = make(map[string]*bool)
 	args.StringArg = make(map[string]*string)
 
-	p := argparse.NewParser(prog, desc)
+	p := argparse.NewParser("UNICORE toolchain",
+		"The UNICORE toolchain allows to build unikernels")
 
 	return p, nil
 }
@@ -103,6 +104,22 @@ func (*Arguments) ParseMainArguments(p *argparse.Parser, args *Arguments) error 
 	if args == nil {
 		return errors.New("args structure should be initialized")
 	}
+
+	args.InitArgParse(p, args, BOOL, "", CRAWLER,
+		&argparse.Options{Required: false, Default: false,
+			Help: "Execute the crawler unikraft tool"})
+	args.InitArgParse(p, args, BOOL, "", DEP,
+		&argparse.Options{Required: false, Default: false,
+			Help: "Execute only the dependency analysis tool"})
+	args.InitArgParse(p, args, BOOL, "", BUILD,
+		&argparse.Options{Required: false, Default: false,
+			Help: "Execute only the automatic build tool"})
+	args.InitArgParse(p, args, BOOL, "", VERIF,
+		&argparse.Options{Required: false, Default: false,
+			Help: "Execute only the verification tool"})
+	args.InitArgParse(p, args, BOOL, "", PERF,
+		&argparse.Options{Required: false, Default: false,
+			Help: "Execute only the performance tool"})
 
 	// Parse only the two first arguments <program name, [tools]>
 	if len(os.Args) > 2 {

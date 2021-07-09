@@ -29,7 +29,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-DOCKERDIR             := $(dir $(lastword $(MAKEFILE_LIST)))
+DOCKERDIR           := $(dir $(lastword $(MAKEFILE_LIST)))
 
 UK_VER              ?= staging
 UK_PLAT             ?= linuxu # Default to userspace apps
@@ -102,20 +102,21 @@ else
 endif
 
 # GO build targets
-GO_VERSION  ?= 1.14.4
-#CONTRIBDIR 	?= $(KRAFTDIR)/contrib
-#GOTOOLS 	?= $(CONTRIBDIR)/gotools/
+GO_VERSION          ?= 1.14.4
 
 .PHONY: docker-gotools
+docker-gotools: GOTOOLS_TARGET ?= gotools
+ifeq ($(GOTOOLS_TARGET),gotools-build)
+docker-gotools: IMAGE_NAME ?= $(ORG)/gotools:$(GO_VERSION)-build
+else
 docker-gotools: IMAGE_NAME ?= $(ORG)/gotools:$(GO_VERSION)
+endif
 docker-gotools:
-	# Copy contrib to avoid forbidden path outside the build context
-	cp	-r $(GOTOOLS)	$(DOCKERDIR) 
-
 ifneq (,$(findstring help,$(MAKECMDGOALS)))
-	@echo "Usage: [IMAGE_NAME=...] $(MAKE) $@                                            "
-	@echo "This command build the devel tools which allows developers to build unikernels"
-	@echo "from existing applications"
+	@echo "Usage: [GOTOOLS_TARGET=... IMAGE_NAME=...] $(MAKE) $@                         "
+	@echo "                                                                              "
+	@echo "  This command build extension tools which allows developers to build         "
+	@echo "  "unikernels from existing applications.                                     "
 	@echo 
 else
 	$(DOCKER) build \
@@ -124,7 +125,8 @@ else
 		--cache-from $(ORG)/gotools:$(GO_VERSION) \
 		--cache-from $(IMAGE_NAME) \
 		--file $(DOCKERDIR)/Dockerfile.gotools \
-		$(DOCKER_BUILD_EXTRA) $(DOCKERDIR)
+		--target $(GOTOOLS_TARGET) \
+		$(DOCKER_BUILD_EXTRA) $(KRAFTDIR)
 endif
 
 # GCC build targets

@@ -32,6 +32,7 @@
 KRAFTDIR             ?= $(CURDIR)
 DOCKERDIR            ?= $(KRAFTDIR)/docker
 DISTDIR              ?= $(KRAFTDIR)/dist
+BINDIR               ?= $(KRAFTDIR)/bin
 
 ifeq ($(HASH),)
 HASH_COMMIT          ?= HEAD
@@ -54,6 +55,7 @@ PKG_DISTRIBUTION     ?= sid
 APP_VERSION          ?= $(shell echo "$(HASH)$(DIRTY)" | tail -c +2)
 REPO                 ?= https://github.com/unikraft/kraft
 ORG                  ?= unikraft
+INSTALL_PREFIX       ?= /usr/local
 
 
 # Make uilities
@@ -309,8 +311,9 @@ endif
 ifneq (,$(findstring help,$(MAKECMDGOALS)))
 install: no-help
 else
-install:
-	$(Q)$(SNAKE) setup.py install
+install: contrib
+	$(Q)$(SNAKE) setup.py install --prefix=$(INSTALL_PREFIX)
+	$(Q)$(CP) -vr $(KRAFTDIR)/bin/* $(INSTALL_PREFIX)/bin
 endif
 
 

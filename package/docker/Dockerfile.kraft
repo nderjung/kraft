@@ -45,12 +45,17 @@ COPY --from=gcc /lib/ /lib
 COPY --from=gcc /include/ /include
 COPY --from=gcc /libexec/ /libexec
 
-COPY --from=gotools /usr/local/bin/ /usr/local/bin/
+ENV KRAFTDIR=/usr/src/github.com/unikraft/kraft
 
-COPY . /usr/src/kraft
+COPY . ${KRAFTDIR}
+
+COPY --from=gotools /usr/bin/kraft-devel-builder ${KRAFTDIR}/bin/
+COPY --from=gotools /usr/bin/kraft-devel-crawler ${KRAFTDIR}/bin/
+COPY --from=gotools /usr/bin/kraft-devel-depender ${KRAFTDIR}/bin/
+COPY --from=gotools /usr/bin/kraft-devel-verifier ${KRAFTDIR}/bin/
 
 WORKDIR /usr/src/unikraft/apps/app
-ENV UK_WORKDIR /usr/src/unikraft
+ENV UK_WORKDIR /unikraft
 
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
@@ -65,6 +70,7 @@ RUN set -xe; \
       flex \
       git \
       wget \
+      curl \
       patch \
       gawk \
       socat \
@@ -72,19 +78,27 @@ RUN set -xe; \
       unzip \
       uuid-runtime; \
     rm -Rf /var/cache/apt/*; \
-    mkdir -p /usr/src/unikraft/unikraft; \
-    mkdir -p /usr/src/unikraft/libs; \
-    mkdir -p /usr/src/unikraft/apps/app; \
-    cd /usr/src/kraft; \
+    mkdir -p /unikraft/unikraft; \
+    mkdir -p /unikraft/libs; \
+    mkdir -p /unikraft/apps/app; \
+    cd ${KRAFTDIR}; \
     python setup.py install
 
 ENTRYPOINT [ "kraft" ]
 
 FROM kraft AS kraft-dev
 
-WORKDIR /usr/src/kraft
+ARG GO_VERSION=1.14.4
+
+WORKDIR /usr/src/github.com/unikraft/kraft/
+
+ENV GOPATH=/usr
+ENV PATH=${PATH}:/usr/local/go/bin
 
 RUN set -xe; \
+    curl -L https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz -o /tmp/go.tar.gz; \
+    tar -vxzf /tmp/go.tar.gz -C /usr/local; \
+    rm -Rf /tmp/go.tar.gz; \
 		pip install -r ./requirements-dev.txt
 
 ENTRYPOINT [ "" ]

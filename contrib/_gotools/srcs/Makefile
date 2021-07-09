@@ -1,8 +1,11 @@
 # SPDX-License-Identifier: BSD-3-Clause
 #
 # Authors: Gaulthier Gain <gaulthier.gain@uliege.be>
+#          Alexander Jung <alexander.jung@neclab.eu>
 #
 # Copyright (c) 2020, Université de Liège., ULiege. All rights reserved.
+#               2020, NEC Laboratories Europe GmbH, NEC Corporation.
+#                     All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -29,20 +32,30 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-ARG GOLANG_VERSION=1.14.4
+# Program arguments
+APP_NAME ?= kraft-devel-buildtool
 
-FROM golang:${GOLANG_VERSION} AS gotools-build
+# Tools
+DOCKER   ?= docker
+TARGET   ?= binary
+GO       ?= go
+GOBUILD  ?= $(GO) build
+GOCLEAN  ?= $(GO) clean
+GOGET    ?= $(GO) get
+ARCH     ?= amd64
 
-LABEL MAINTAINER="Gaulthier Gain <gaulthier.gain@uliege.be>"
+# Targets
+all: buildtool
 
-ARG CONTRIBDIR=/usr/src/github.com/unikraft/kraft/contrib
-ENV GOPATH=/usr
+buildtool: buildtool-deps
+	CGO_ENABLED=0 GOOS=linux GOARCH=$(ARCH) $(GOBUILD) -o $(APP_NAME) -v
 
-COPY ./contrib/ ${CONTRIBDIR}
-WORKDIR ${CONTRIBDIR}
+buildtool-buildtool: 
+	$(GOCLEAN)
+	rm  -f  $(BINARY_NAME)
 
-RUN make OUTDIR=/usr/bin
-
-FROM scratch AS gotools
-
-COPY --from=gotools-build /usr/bin/ /usr/bin/
+buildtool-deps:
+	$(GOGET) github.com/fatih/color
+	$(GOGET) github.com/akamensky/argparse
+	$(GOGET) github.com/awalterschulze/gographviz
+	$(GOGET) github.com/sergi/go-diff/...
